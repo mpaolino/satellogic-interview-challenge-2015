@@ -1,0 +1,133 @@
+RESUMEN DE OBJETIVOS
+====================
+
+- Problema base                                               SI
+- Interfaz web para el alta de tareas a distribuir            NO
+- Registro historico de distribucion de tareas y resultados   SI
+- Visualizacion del registro historico                        NO
+- Que la distribucion de tareas soporte que la probabilidad   PARCIAL
+  de fallo de cada satelite sea diferente.                    
+- Que soporte una cantidad variable de satelites              SI
+- Que las tareas soporten el parametro HORA de ejecucion.     SI
+- Justificar las dediciones tecnicas y el diseño              SI
+
+
+SUPUESTOS
+=========
+
+- Se asume que todos los satelites tienen los mismos recursos
+- Se asume que los nombres de tareas estan asociados a una sola combinacion de
+  recursos (satelite no puede tener 2 tareas "fotos" con diferentes recursos).
+  Esto evita ambiguedades en las respuestas de los satelites, se evita tener
+  que enviar todos los datos de la tarea nuevamente con la respuesta para
+  identificarla o generar ids unicos por cada tarea.
+- Se asume que todos los payoffs de las tareas son >= 0
+
+DECISIONES Y NOTAS DE DISEÑO
+============================
+
+- Elegí inglés para el código y los comentarios, esto incluye nombrar los atributos de las tareas.
+
+- Decidí representar los satelites y estación terrestre como procesos hijos del mismo programa,
+  la comunicación entre ellos es mediante Pipes. Éstos tienen excelente performance
+  y son el defacto-estandar para comunicación bidireccional punto a punto entre procesos en Python.
+
+- Decidí usar 0MQ como protocolo de mensajería para alimentar de peticiones de tareas a la estación terrestre.
+  Preferi favorecer la simpleza y robustez que provee la libreria cumpliendo con el objetivo práctico de la prueba.
+  Cabe notar que no realicé el servicio web de creación de tareas por falta de tiempo.
+  Se provee en cambio un script que lee un archivo en formato JSON con los datos de las tareas
+  y se envia a la estacion. Ver "Como ejecutarlo" por detalles.
+  
+  Si esto fuera un sistema consumido por actores externos en un entorno de produccion
+  probablemente seria mejor adherirse a un diseño basado en arquitectura Rest.
+
+- La configuración de los satelites y del puerto donde escucha la estación terrestre se almacena en
+  el archivo 'satsim/config.py'. 
+
+- Se implemento la restricción de hora de tasks y este atributo paso a ser obligatorio de éstas.
+
+- Se implemento la probabilidad de falla por satelite, configurable por satelite en 'satsim/config.py'
+
+- Dentro del simulador se eligió enviar la lista de tareas a los satelites y sus respuestas de manera bulk.
+  No es requerido por la letra pero entiendo que simula un poco mejor el escenario donde los satelites tiene
+  periodos de ventana donde pueden transmitir sus datos y realizar una comunicacion bulk de tareas/resultados
+  seria lo mas eficiente.
+
+- La estación utiliza un thread independiente para esperar y procesar las respuestas, asi como otro para escuchar
+  y procesar las peticiones. Ambos se bloquean para no consumir ciclos mientras se espera por requests/resultados.
+  El procesamiento de las respuesta se limita simplemente a imprimir por pantalla los resultados de las tareas
+  y almacenarlos en un archivos CSV configurable en 'satsim/config.py'. Las peticiones tambien registran las
+  distribuciones de tareas a un archivo. Ver 
+
+- El problema de la asignación de tareas fue reducido a un problema de obtención de Maximum Weighted Independent
+  Set. La idea fue pensar el problema como un grafo donde los nodos son las tareas y las aristas representan
+  los conflictos de recursos, de manera que el siguiente paso consistió en identificar que algoritmo podía usar
+  para obtener los nodos independientes. Inicialmente habia realizado un algoritmo greedy que aproximaba el problema 
+  de una manera bastante burda, simplemente ordenaba las tareas por payoff e iba agregando a un subset a asignar a un
+  satelite las tareas que no presentaban conflictos. 
+  Si bien "cumplia" con lo solicitado (al menos para algunos casos), debi invertir más tiempo buscando una mejor
+  solución. 
+
+- Debido a la escasez de tiempo y a razón de que no iba a realizar la interfaz web para el alta y la visualización
+  de distribuciones de tareas, decidí crear simples registros CSV de las distribuciones y las asignaciones
+  de tareas.
+
+Otros puntos de mejora que se dejaron afuera por falta de tiempo:
+    - Mejorar tests! (probar mejor el algoritmo de asignacion de tareas!)
+    - Mejorar validaciones 
+    - Hacer un logging apropiado en vez de simples prints
+    - Interfaz web
+    - Mayor desacople del codigo de la estación
+
+
+COMO EJECUTARLO
+===============
+
+Dependencias:
+
+    Para instalar dependencias se aconseja crear y activar un virtualenv. 
+    Notar que este programa depende de PyZMQ y éste va a intentar descargar y
+    compilar la libreria zmq si no esta disponible en el sistema.
+
+    $ pip install -r requirements.txt
+
+Invocar simulador - estación y satélites:
+
+    $ ./run.sh 
+    [Satellite 0] process started
+    [Satellite 1] process started
+    [Station] process started
+
+Para enviar tareas a la estación:
+    
+    $ ./sendtasks.py --help
+    usage: sendtasks.py [-h] [--file FILE] [--host HOST] [--port PORT]
+
+    optional arguments:
+      -h, --help   show this help message and exit
+      --file FILE  request JSON file (default: tasks.json)
+      --host HOST  station host (default: localhost)
+      --port PORT  station port (default: 5556)
+
+    $ ./sendtasks.py
+    Connecting to Station and sending requests... DONE
+    Station replied: OK
+
+Para correr tests:
+    $ nosetests
+
+
+
+ARCHIVOS DE REGISTROS CSV
+=========================
+
+Los nombres de archivos de registro de asignaciones y de resultados pueden ser configurados en 'satsim/config.py'.
+Los valores por defecto son:
+    RESULTS_CSV_FILE = "results.csv"
+    TASK_DISTRIBUTION_CSV_FILE = "distribution.csv"
+
+Formatos de columnas:
+
+    RESULTS_CSV_FILE:           timestamp, nombre_de_tarea, id_satelite, <ok|failed>
+    
+    TASK_DISTRIBUTION_CSV_FILE: timestamp, nombre_de_tarea, payoff, lista_recursos, hora, id_satelite
