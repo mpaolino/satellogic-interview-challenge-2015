@@ -23,7 +23,7 @@ Bonus points
 ------------
   * Historical registry of tasks and results                                               - Done
   * Support for variable number of satellites                                              - Done
-  * Tasks support the an HOUR attribute, its execution time                                - Done
+  * Tasks support the HOUR attribute, defining its execution time                          - Done
   * Distribution of tasks need to support variable failure probability for each satellite  - Done
   * Create a web interface to upload tasks                                                 - No, time constrained
   * Visualization of the historical registry                                               - No, time constrained
