@@ -1,10 +1,8 @@
-This is the result of a coding challenge as part of a selection process for a Python programmer role in 2015 at Satellogic (https://satellogic.com).
+This project is the result of a coding challenge for a Python programmer position at Satellogic (https://satellogic.com) in 2015.
 
-The problem was to create a satellite fleet simulation and task scheduling system. There was no deadline but I didn't want to spend too much time on it but
-it ended taking me round 12 hours because I spend much more time than I expected by refreshing some concepts and improving the task assigment algorithm
-to find an optimal solution.
-The interview and process was all done in Spanish so the provided LEEME.txt which justifies the design decisions, assumptions and instructions
-how to use it are all written in that language. All code and comments are in English.
+The task was to build a satellite fleet simulation and task scheduling system. Although there was no fixed deadline, I initially intended to spend only a few hours on it. However, it ended up taking around 12 hours, as I spent more time than expected refreshing certain concepts and improving the task assignment algorithm to find an optimal solution.
+
+The interview and selection process were conducted entirely in Spanish, so the accompanying LEEME.txt file—containing design decisions, assumptions, and usage instructions—is written in Spanish. All code and comments, however, are in English.
 
 
 Main objective
@@ -22,7 +20,7 @@ Definitions and constrains
 Bonus points
 ------------
   * Historical registry of tasks and results                                               - Done
-  * Support for variable number of satellites                                              - Done
+  * Support a variable number of satellites                                              - Done
   * Tasks support the HOUR attribute, defining its execution time                          - Done
   * Distribution of tasks need to support variable failure probability for each satellite  - Done
   * Create a web interface to upload tasks                                                 - No, time constrained
